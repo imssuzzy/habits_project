@@ -1,17 +1,14 @@
 from typing import Annotated, List
 
 from fastapi import APIRouter, Depends, status
-from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.utils import get_current_active_profile
 from app.core.exceptions import NotFoundException
 from app.database import get_db
 from app.profile.schemas import ProfileCreateSchema, ProfileResponse, ProfileListResponse
 from app.profile.service import ProfileService
 
-http_bearer = HTTPBearer(auto_error=False)
-router = APIRouter(dependencies=[Depends(get_current_active_profile)])
+router = APIRouter()
 
 
 @router.get("/profile-list/{profile_id}", response_model=ProfileListResponse)

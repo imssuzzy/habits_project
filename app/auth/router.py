@@ -1,7 +1,6 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response
-from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.exceptions import UserIsNotActive, WrongCredentials
@@ -10,8 +9,6 @@ from app.auth.services import AuthService
 from app.auth.utils import (
     create_access_token,
     create_refresh_token,
-    get_current_active_profile,
-    get_current_profile_by_refresh,
     validate_password,
 )
 from app.core.exceptions import NotFoundException
@@ -19,8 +16,7 @@ from app.database import get_db
 from app.profile.models import Profile
 from app.profile.schemas import ProfileSchema
 
-http_bearer = HTTPBearer(auto_error=False)
-router = APIRouter(dependencies=[Depends(http_bearer)])
+router = APIRouter()
 
 
 @router.post("/login", response_model=TokenInfo)

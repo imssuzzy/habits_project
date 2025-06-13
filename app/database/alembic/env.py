@@ -17,6 +17,8 @@ fileConfig(config.config_file_name)
 
 detect_models()
 
+print('ALEMBIC TABLES:', Base.metadata.tables)
+
 # add your model's MetaData object here
 # for 'autogenerate' support
 target_metadata = Base.metadata
