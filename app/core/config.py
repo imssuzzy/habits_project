@@ -39,7 +39,7 @@ class Config(BaseSettings):
     CORS_ORIGINS: list[str] = ["*"]
     CORS_HEADERS: list[str] = ["*"]
 
-    DATABASE_URL: PostgresDsn =  "postgresql+asyncpg://postgres:postgres@db:5432/postgres"
+    DATABASE_URL: PostgresDsn =  "postgresql+asyncpg://postgres:postgres@localhost:5434/postgres"
     # REDIS_URL: str = "redis://:@redis:6379"
     ENABLE_SENTRY: bool = False
     SENTRY_DSN: str | None = None

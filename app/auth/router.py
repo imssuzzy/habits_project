@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response
+from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.exceptions import UserIsNotActive, WrongCredentials
@@ -9,14 +10,17 @@ from app.auth.services import AuthService
 from app.auth.utils import (
     create_access_token,
     create_refresh_token,
+    get_current_active_profile,
+    get_current_profile_by_refresh,
     validate_password,
 )
 from app.core.exceptions import NotFoundException
 from app.database import get_db
-from app.profile.models import Profile
+from app.profile.models import User
 from app.profile.schemas import ProfileSchema
 
-router = APIRouter()
+http_bearer = HTTPBearer(auto_error=False)
+router = APIRouter(dependencies=[Depends(http_bearer)])
 
 
 @router.post("/login", response_model=TokenInfo)
@@ -26,7 +30,7 @@ async def auth_user_issue_jwt(
         db: Annotated[AsyncSession, Depends(get_db)],
 ):
     auth_service: AuthService = AuthService(db)
-    profile: Profile = await auth_service.get_by_login(login.login)
+    profile: User = await auth_service.get_by_login(login.login)
     if not profile:
         raise NotFoundException("Profile not found")
 
@@ -52,7 +56,7 @@ async def auth_user_issue_jwt(
 
 @router.post("/refresh", response_model=TokenInfo)
 async def refresh_token(
-    profile: Profile = Depends(get_current_profile_by_refresh),
+    profile: User = Depends(get_current_profile_by_refresh),
 ):
     access_token = await create_access_token(profile)
     refresh_token = await create_refresh_token(profile)

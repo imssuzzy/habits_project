@@ -23,7 +23,7 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_one(self, profile_id: int):
+    async def delete_one(self, model_id: int):
         raise NotImplementedError
 
 
@@ -64,8 +64,8 @@ class BaseRepository(AbstractRepository):
         await self.session.commit()
         return res.scalar_one_or_none()
 
-    async def delete_one(self, profile_id: int):
-        stmt = delete(self.model).where(self.model.id == profile_id)
+    async def delete_one(self, model_id: int):
+        stmt = delete(self.model).where(self.model.id == model_id)
         res = await self.session.execute(stmt)
         await self.session.commit()
         return res.rowcount > 0

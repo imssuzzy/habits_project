@@ -11,10 +11,10 @@ from app.profile.service import ProfileService
 router = APIRouter()
 
 
-@router.get("/profile-list/{profile_id}", response_model=ProfileListResponse)
-async def get_profile_list(profile_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+@router.get("/profile-list", response_model=ProfileListResponse)
+async def get_profile_list(db: Annotated[AsyncSession, Depends(get_db)]):
     auth_service: ProfileService = ProfileService(db)
-    profile = await auth_service.find_all(filters={"id": profile_id})
+    profile = await auth_service.find_all()
     if not profile:
         raise NotFoundException("Profile not found")
     return ProfileListResponse(data=profile)

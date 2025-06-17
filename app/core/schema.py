@@ -1,4 +1,4 @@
-from typing import List, Any, Dict, Union
+from typing import List, Any, Dict, Union, Optional
 from pydantic import BaseModel
 
 
@@ -16,14 +16,14 @@ class SuccessResponse(BaseModel):
 
 
 class ErrorDetails(BaseModel):
-    field: str | None = None
-    issue: str | None = None
+    field: Optional[str] = None
+    issue: Optional[str] = None
 
 
 class ErrorResponse(BaseModel):
     status: str = "error"
-    error: dict = {
+    error: Dict[str, Any] = {
         "code": str,
         "message": str,
-        "details": ErrorDetails | None
+        "details": Optional[List[ErrorDetails]]
     }

@@ -4,22 +4,17 @@ from sqlalchemy import (
     Integer,
     String,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+from app.habits.models import Habit
 
 
-class Profile(Base):
+class User(Base):
     __tablename__ = "profile"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_type: Mapped[str] = mapped_column(String(32), nullable=True)
-    phone_number: Mapped[str] = mapped_column(String, nullable=True)
     first_name: Mapped[str] = mapped_column(String(50), nullable=True)
     last_name: Mapped[str] = mapped_column(String(50), nullable=True)
-    middle_name: Mapped[str] = mapped_column(String(50), nullable=True)
     email: Mapped[str] = mapped_column(String(255), nullable=True)
-    gender: Mapped[bool] = mapped_column(Boolean, nullable=True)
-    created_date: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    date_of_birth: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    updated_date: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    habits: Mapped[list[Habit]] = relationship('Habit', back_populates="user")

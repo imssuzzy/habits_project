@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.repository import BaseRepository
-from app.profile.models import Profile
+from app.profile.models import User
 
 
 class ProfileService(BaseRepository):
     def __init__(self, session: AsyncSession):
-        super().__init__(Profile, session)
+        super().__init__(User, session)
