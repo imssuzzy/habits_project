@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete, and_, func
 
-from app.habits.schemas.schemas import (
+from apps.habits.schemas.schemas import (
     HabitSchema, 
     HabitCreateSchema, 
     HabitUpdateSchema,
@@ -13,9 +13,9 @@ from app.habits.schemas.schemas import (
     DayStatsSchema,
     HabitHistorySchema
 )
-from app.habits.models import Habit, HabitInstance, HabitStatus
+from apps.habits.models import Habit, HabitInstance, HabitStatus
 from typing import List, Optional
-from app.core.exceptions import NotFoundException
+from apps.core.exceptions import NotFoundException
 from fastapi import HTTPException
 class HabitService:
     def __init__(self, db: AsyncSession):

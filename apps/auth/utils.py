@@ -7,18 +7,18 @@ from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.exceptions import TokenInvalid, ProfileIsNotActive
-from app.auth.services import AuthService
-from app.core.config import settings
-from app.database import get_db
-from app.profile.models import Profile
-from app.profile.schemas import ProfileSchema
+from apps.auth.exceptions import TokenInvalid, ProfileIsNotActive
+from apps.auth.services import AuthService
+from apps.core.config import settings
+from apps.database import get_db
+from apps.profile.models import Profile
+from apps.profile.schemas import ProfileSchema
 
 from fastapi import Request, HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.profile.service import ProfileService
-from app.database import get_db
-from app.profile.models import Profile
+from apps.profile.service import ProfileService
+from apps.database import get_db
+from apps.profile.models import Profile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 ALGORITHM = "HS256"

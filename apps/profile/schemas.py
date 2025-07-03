@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 from pydantic import BaseModel, EmailStr
-from app.core.schema import SuccessResponse
+from apps.core.schema import SuccessResponse
 
 
 class ProfileSchema(BaseModel):

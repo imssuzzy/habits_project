@@ -4,20 +4,20 @@ from fastapi import APIRouter, Depends, Response, Form
 from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.exceptions import ProfileIsNotActive, WrongCredentials
-from app.auth.schema import LoginSchema, TokenInfo
-from app.auth.services import AuthService
-from app.auth.utils import (
+from apps.auth.exceptions import ProfileIsNotActive, WrongCredentials
+from apps.auth.schema import LoginSchema, TokenInfo
+from apps.auth.services import AuthService
+from apps.auth.utils import (
     create_access_token,
     create_refresh_token,
     get_current_active_profile,
     get_current_profile_by_refresh,
     validate_password,
 )
-from app.core.exceptions import NotFoundException
-from app.database import get_db
-from app.profile.models import Profile
-from app.profile.schemas import ProfileSchema
+from apps.core.exceptions import NotFoundException
+from apps.database import get_db
+from apps.profile.models import Profile
+from apps.profile.schemas import ProfileSchema
 
 http_bearer = HTTPBearer(auto_error=False)
 router = APIRouter(dependencies=[Depends(http_bearer)])

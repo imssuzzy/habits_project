@@ -6,8 +6,7 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List, Optional
 
-from app.database import Base
-# from app.profile.models import Profile  # Удалено для избежания циклического импорта
+from apps.database import Base
 
 
 class HabitStatus(enum.Enum):

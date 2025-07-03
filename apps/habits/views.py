@@ -1,7 +1,7 @@
 from sentry_sdk.session import Session
 
-from app.habits.models import Habit
-from app.habits.service import HabitService
+from apps.habits.models import Habit
+from apps.habits.service import HabitService
 
 
 class HabitView:

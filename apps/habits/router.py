@@ -2,10 +2,10 @@ from datetime import date
 from typing import Optional
 from fastapi import APIRouter, Depends, status, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.database import get_db
-from app.auth.router import get_current_active_profile
+from apps.database import get_db
+from apps.auth.router import get_current_active_profile
 
-from app.habits.schemas.schemas import (
+from apps.habits.schemas.schemas import (
     HabitCreateSchema,
     HabitUpdateSchema,
     HabitInstanceCreateSchema,
@@ -20,8 +20,8 @@ from .schemas.responses import (
     HabitHistoryResponse, HabitDeleteResponse, HabitCreateResponse
 )
 from .service import HabitService
-from app.core.exceptions import NotFoundException
-from app.profile.models import Profile
+from apps.core.exceptions import NotFoundException
+from apps.profile.models import Profile
 
 
 router = APIRouter()

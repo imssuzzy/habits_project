@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.repository import BaseRepository
-from app.profile.models import Profile
+from apps.database.repository import BaseRepository
+from apps.profile.models import Profile
 
 
 class ProfileService(BaseRepository):

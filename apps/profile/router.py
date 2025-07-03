@@ -3,11 +3,11 @@ from typing import Annotated, List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundException
-from app.database import get_db
-from app.profile.schemas import ProfileCreateSchema, ProfileResponse, ProfileListResponse
-from app.profile.service import ProfileService
-from app.auth.utils import hash_password
+from apps.core.exceptions import NotFoundException
+from apps.database import get_db
+from apps.profile.schemas import ProfileCreateSchema, ProfileResponse, ProfileListResponse
+from apps.profile.service import ProfileService
+from apps.auth.utils import hash_password
 
 router = APIRouter()
 

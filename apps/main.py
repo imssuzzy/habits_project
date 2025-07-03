@@ -4,9 +4,9 @@ import sentry_sdk
 from fastapi import Request, HTTPException, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from app.core.config import settings
-from app.core.error_handlers import general_exception_handler, http_exception_handler, validation_exception_handler
-from app.core.setup_app import create_app
+from apps.core.config import settings
+from apps.core.error_handlers import general_exception_handler, http_exception_handler, validation_exception_handler
+from apps.core.setup_app import create_app
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s", level=logging.DEBUG

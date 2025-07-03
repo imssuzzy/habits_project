@@ -16,7 +16,7 @@ RUN pip install poetry==1.8.3
 # Configuring poetry
 RUN poetry config virtualenvs.create false
 
-WORKDIR /app
+WORKDIR /apps
 
 # Copying requirements of a project
 COPY pyproject.toml poetry.lock ./
@@ -25,7 +25,7 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry install --no-root
 
 # Copying actual application
-COPY ./app ./app
+COPY ./apps ./apps
 
 # Expose the port
 EXPOSE 8000
