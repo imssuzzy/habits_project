@@ -1,8 +1,8 @@
-"""initial migration
+"""initial
 
-Revision ID: 428854d51e3c
+Revision ID: ed491fe044ce
 Revises: 
-Create Date: 2025-06-17 03:47:02.389416
+Create Date: 2025-06-27 09:10:58.313395
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '428854d51e3c'
+revision: str = 'ed491fe044ce'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -25,17 +25,24 @@ def upgrade() -> None:
     sa.Column('first_name', sa.String(length=50), nullable=True),
     sa.Column('last_name', sa.String(length=50), nullable=True),
     sa.Column('email', sa.String(length=255), nullable=True),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('login', sa.String(length=255), nullable=True),
+    sa.Column('password', sa.String(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('habits',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('name', sa.String(length=255), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
     sa.Column('duration_days', sa.Integer(), nullable=False),
     sa.Column('days_of_week', sa.ARRAY(sa.String()), nullable=False),
-    sa.Column('description', sa.String(), nullable=True),
     sa.Column('start_date', sa.Date(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['profile.id'], ),
+    sa.Column('end_date', sa.Date(), nullable=True),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('profile_id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['profile_id'], ['profile.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_habits_name'), 'habits', ['name'], unique=False)
@@ -43,8 +50,11 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('habit_id', sa.Integer(), nullable=False),
     sa.Column('date', sa.Date(), nullable=False),
-    sa.Column('status', sa.Enum('pending', 'done', 'skipped', name='habitstatus'), nullable=False),
-    sa.ForeignKeyConstraint(['habit_id'], ['habits.id'], ),
+    sa.Column('status', sa.Enum('pending', 'done', 'skipped', 'deleted', name='habitstatus'), nullable=False),
+    sa.Column('reason', sa.Text(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.ForeignKeyConstraint(['habit_id'], ['habits.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('habit_id', 'date', name='uq_habit_date')
     )

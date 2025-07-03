@@ -2,23 +2,36 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
-import jwt
+from jose import jwt, JWTError
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.exceptions import TokenInvalid, UserIsNotActive
+from app.auth.exceptions import TokenInvalid, ProfileIsNotActive
 from app.auth.services import AuthService
 from app.core.config import settings
 from app.database import get_db
-from app.profile.models import User
+from app.profile.models import Profile
 from app.profile.schemas import ProfileSchema
+
+from fastapi import Request, HTTPException, status, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.profile.service import ProfileService
+from app.database import get_db
+from app.profile.models import Profile
+from sqlalchemy.ext.asyncio import AsyncSession
+
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ACCESS_TOKEN_EXPIRE_DAYS = 30
+
+http_bearer = HTTPBearer(auto_error=False)
 
 TOKEN_TYPE_FIELD = "token_type"
 ACCESS_TOKEN_TYPE = "access"
 REFRESH_TOKEN_TYPE = "refresh"
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/api/v1/profile/login",
+    tokenUrl="/api/v1/profile/login-form",
 )
 
 
@@ -48,13 +61,12 @@ def encode_jwt(
     return encoded
 
 
-def decode_jwt(
-    token: str | bytes,
-    secret_key: str = settings.AUTH_JWT.SECRET_KEY,
-    algorithm: str = settings.AUTH_JWT.ALGORITHM
-) -> dict:
-    decoded = jwt.decode(token, secret_key, algorithms=[algorithm])
-    return decoded
+def decode_jwt(token: str, secret_key: str = settings.AUTH_JWT.SECRET_KEY,) -> dict:
+    try:
+        payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token decode failed")
 
 
 def hash_password(
@@ -68,13 +80,9 @@ def hash_password(
 
 def validate_password(
     password: str,
-    hashed_password: bytes | str,
+    hashed_password: str,
 ) -> bool:
-    hashed_password_bytes = hashed_password.encode('utf-8')
-    return bcrypt.checkpw(
-        password=password.encode(),
-        hashed_password=hashed_password_bytes,
-    )
+    return bcrypt.checkpw(password.encode(), hashed_password.encode())
 
 
 async def generate_jwt_token(
@@ -94,28 +102,27 @@ async def generate_jwt_token(
     )
 
 
-async def create_access_token(profile: User):
-    jwt_payload = {
-        "sub": profile.login,
-        "username": profile.first_name + ' ' + profile.last_name,
-        "email": profile.email,
+async def create_access_token(profile: Profile):
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    payload = {
+        "sub": str(profile.id),
+        "exp": expire,
+        "token_type": "refresh",
     }
-    return await generate_jwt_token(
-        token_type=ACCESS_TOKEN_TYPE,
-        token_data=jwt_payload,
-        expiration_minutes=settings.AUTH_JWT.ACCESS_TOKEN_EXPIRATION_MINUTES,
-    )
+
+    token = jwt.encode(payload, settings.SECRET_KEY.get_secret_value(), algorithm=ALGORITHM)
+    return token
 
 
-async def create_refresh_token(profile: User):
-    jwt_payload = {
-        "sub": profile.login,
+async def create_refresh_token(profile: Profile):
+    expire = datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+    payload = {
+        "sub": str(profile.id),
+        "exp": expire,
     }
-    return await generate_jwt_token(
-        token_type=REFRESH_TOKEN_TYPE,
-        token_data=jwt_payload,
-        expire_timedelta=timedelta(days=settings.AUTH_JWT.REFRESH_TOKEN_EXPIRATION_DAYS),
-    )
+
+    token = jwt.encode(payload, settings.SECRET_KEY.get_secret_value(), algorithm=ALGORITHM)
+    return token
 
 
 def validate_token_type(payload: dict, token_type: str):
@@ -132,21 +139,17 @@ async def get_current_token_payload(token: str = Depends(oauth2_scheme)):
     return payload
 
 
-class UserGetterFromToken:
+class ProfileGetterFromToken:
     def __init__(self, token_type: str):
         self.token_type = token_type
 
-    async def __call__(
-        self,
-        payload: dict = Depends(get_current_token_payload),
-        db: AsyncSession = Depends(get_db),
-    ):
-        validate_token_type(payload, self.token_type)
-        return await get_user_by_token_sub(payload, db)
+    async def __call__(self, token: str = Depends(oauth2_scheme)):
+        # Здесь должна быть логика получения профиля по токену
+        return Profile()
 
 
-get_current_profile = UserGetterFromToken(token_type=ACCESS_TOKEN_TYPE)
-get_current_profile_by_refresh = UserGetterFromToken(token_type=REFRESH_TOKEN_TYPE)
+get_current_profile = ProfileGetterFromToken(token_type=ACCESS_TOKEN_TYPE)
+get_current_profile_by_refresh = ProfileGetterFromToken(token_type=REFRESH_TOKEN_TYPE)
 
 
 async def get_user_by_token_sub(
@@ -155,18 +158,43 @@ async def get_user_by_token_sub(
 ):
     login: str | None = payload.get("sub")
     auth_service: AuthService = AuthService(db)
-    profile: User = await auth_service.get_by_login(login)
+    profile: Profile = await auth_service.get_by_login(login)
     if profile:
         return profile
     raise TokenInvalid
 
 
 async def get_current_active_profile(
-    profile: ProfileSchema = Depends(get_current_profile)
-):
-    if profile.is_active:
-        return profile
-    raise UserIsNotActive()
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer)
+) -> Profile:
+    token = None
+
+    # 1. Authorization header
+    if credentials:
+        token = credentials.credentials
+    # 2. Cookie fallback
+    elif "access_token" in request.cookies:
+        token = request.cookies["access_token"]
+
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
+    try:
+        payload = decode_jwt(token)
+        profile_id = payload.get("sub")
+        if not profile_id:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token decode failed")
+
+    profile_service = ProfileService(db)
+    profile = await profile_service.get_one(int(profile_id))
+    if not profile or not profile.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive or missing profile")
+
+    return profile
 
 
 # async def get_access_token_from_cookies(access_token: str = Cookie(None)):

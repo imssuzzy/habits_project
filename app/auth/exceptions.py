@@ -6,8 +6,8 @@ class WrongCredentials(HTTPException):
         super().__init__(status_code=401, detail=detail)
 
 
-class UserIsNotActive(HTTPException):
-    def __init__(self, detail: str = "User is not active"):
+class ProfileIsNotActive(HTTPException):
+    def __init__(self, detail: str = "Profile is not active"):
         super().__init__(status_code=403, detail=detail)
 
 

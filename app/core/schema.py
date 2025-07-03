@@ -22,8 +22,4 @@ class ErrorDetails(BaseModel):
 
 class ErrorResponse(BaseModel):
     status: str = "error"
-    error: Dict[str, Any] = {
-        "code": str,
-        "message": str,
-        "details": Optional[List[ErrorDetails]]
-    }
+    error: Dict[str, Any] = {}

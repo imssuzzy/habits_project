@@ -1,10 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, Form
 from fastapi.security import HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.exceptions import UserIsNotActive, WrongCredentials
+from app.auth.exceptions import ProfileIsNotActive, WrongCredentials
 from app.auth.schema import LoginSchema, TokenInfo
 from app.auth.services import AuthService
 from app.auth.utils import (
@@ -16,32 +16,53 @@ from app.auth.utils import (
 )
 from app.core.exceptions import NotFoundException
 from app.database import get_db
-from app.profile.models import User
+from app.profile.models import Profile
 from app.profile.schemas import ProfileSchema
 
 http_bearer = HTTPBearer(auto_error=False)
 router = APIRouter(dependencies=[Depends(http_bearer)])
 
 
-@router.post("/login", response_model=TokenInfo)
-async def auth_user_issue_jwt(
-        login: LoginSchema,
-        response: Response,
-        db: Annotated[AsyncSession, Depends(get_db)],
+@router.post("/refresh", response_model=TokenInfo)
+async def refresh_token(
+    current_profile: Profile = Depends(get_current_profile_by_refresh),
+):
+    access_token = await create_access_token(current_profile)
+    refresh_token = await create_refresh_token(current_profile)
+    return TokenInfo(
+        access_token=access_token,
+        refresh_token=refresh_token,
+    )
+
+
+@router.get("/me", response_model=ProfileSchema)
+async def get_me(
+    current_profile: Profile = Depends(get_current_active_profile),
+):
+    return current_profile
+
+from fastapi import Form
+
+@router.post("/login-form", response_model=TokenInfo)
+async def auth_profile_issue_jwt_form(
+    username: str = Form(...),
+    password: str = Form(...),
+    response: Response = None,
+    db: AsyncSession = Depends(get_db),
 ):
     auth_service: AuthService = AuthService(db)
-    profile: User = await auth_service.get_by_login(login.login)
+    profile: Profile = await auth_service.get_by_login(username)
     if not profile:
         raise NotFoundException("Profile not found")
 
     if not validate_password(
-        password=login.password,
+        password=password,
         hashed_password=profile.password,
     ):
         raise WrongCredentials()
 
     if not profile.is_active:
-        raise UserIsNotActive()
+        raise ProfileIsNotActive()
 
     access_token = await create_access_token(profile)
     refresh_token = await create_refresh_token(profile)
@@ -52,25 +73,3 @@ async def auth_user_issue_jwt(
         access_token=access_token,
         refresh_token=refresh_token,
     )
-
-
-@router.post("/refresh", response_model=TokenInfo)
-async def refresh_token(
-    profile: User = Depends(get_current_profile_by_refresh),
-):
-    access_token = await create_access_token(profile)
-    refresh_token = await create_refresh_token(profile)
-    return TokenInfo(
-        access_token=access_token,
-        refresh_token=refresh_token,
-    )
-
-
-@router.get("/profile/me/")
-async def auth_user_check_self_info(
-    profile: ProfileSchema = Depends(get_current_active_profile),
-):
-    return {
-        "login": profile.login,
-        "email": profile.email,
-    }

@@ -2,6 +2,7 @@ import os
 from enum import Enum
 from pathlib import Path
 from typing import List
+from pydantic import SecretStr
 
 from pydantic import AnyHttpUrl, BaseModel, PostgresDsn
 from pydantic_settings import BaseSettings
@@ -49,6 +50,9 @@ class Config(BaseSettings):
     LOGGING_LEVEL: str = "INFO"
     API_V1_STR: str = "/api/v1"
     WS_PREFIX: str = "/ws"
+
+    SECRET_KEY: SecretStr
+    ALGORITHM: str = "HS256"
 
     AUTH_JWT: AuthJWT = AuthJWT()
 
